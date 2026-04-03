@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brown_primary">#795548</color>
+    <color name="brown_primary_dark">#5D4037</color>
+    <color name="brown_accent">#A1887F</color>
+    <color name="brown_light">#D7CCC8</color>
+    <color name="brown_very_light">#EFEBE9</color>
+    <color name="gold">#C8A951</color>
+    <color name="gold_dark">#A68B3C</color>
+    <color name="white">#FFFFFF</color>
+    <color name="off_white">#FFF8F0</color>
+    <color name="text_primary">#3E2723</color>
+    <color name="text_secondary">#5D4037</color>
+    <color name="text_hint">#BCAAA4</color>
+    <color name="divider">#D7CCC8</color>
+    <color name="status_pending">#F57C00</color>
+    <color name="status_confirmed">#388E3C</color>
+    <color name="status_completed">#1976D2</color>
+    <color name="status_cancelled">#D32F2F</color>
+    <color name="card_bg">#FFFFFF</color>
+</resources>
