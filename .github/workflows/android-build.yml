@@ -36,14 +36,47 @@ jobs:
       - name: Build Release APK
         run: ./gradlew assembleRelease
 
+      - name: Decode keystore
+        if: ${{ env.KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 -d > servyou-release.jks
+
+      - name: Sign Release APK
+        if: ${{ env.KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          UNSIGNED_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          ALIGNED_APK="app/build/outputs/apk/release/app-release-aligned.apk"
+          SIGNED_APK="app/build/outputs/apk/release/ServYou-v${{ github.run_number }}-release.apk"
+
+          # Align
+          ${ANDROID_HOME}/build-tools/$(ls ${ANDROID_HOME}/build-tools/ | tail -1)/zipalign -v -p 4 "$UNSIGNED_APK" "$ALIGNED_APK"
+
+          # Sign
+          ${ANDROID_HOME}/build-tools/$(ls ${ANDROID_HOME}/build-tools/ | tail -1)/apksigner sign \
+            --ks servyou-release.jks \
+            --ks-key-alias ${{ secrets.KEY_ALIAS }} \
+            --ks-pass pass:${{ secrets.KEYSTORE_PASSWORD }} \
+            --key-pass pass:${{ secrets.KEY_PASSWORD }} \
+            --out "$SIGNED_APK" \
+            "$ALIGNED_APK"
+
+          # Verify
+          ${ANDROID_HOME}/build-tools/$(ls ${ANDROID_HOME}/build-tools/ | tail -1)/apksigner verify "$SIGNED_APK"
+
+          # Cleanup
+          rm -f servyou-release.jks "$ALIGNED_APK" "$UNSIGNED_APK"
+
       - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         with:
           name: servyou-debug
           path: app/build/outputs/apk/debug/*.apk
 
-      - name: Upload Release APK
+      - name: Upload Signed Release APK
         uses: actions/upload-artifact@v4
         with:
           name: servyou-release
-          path: app/build/outputs/apk/release/*.apk
+          path: app/build/outputs/apk/release/ServYou-*.apk
