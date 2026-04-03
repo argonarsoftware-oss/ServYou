@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServYou - VPS Deployment Guide</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #1a1a2e; color: #e0e0e0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        h1 { color: #C8A951; font-size: 28px; margin-bottom: 5px; }
+        .subtitle { color: #A1887F; margin-bottom: 30px; font-size: 14px; }
+        h2 { color: #C8A951; font-size: 20px; margin: 30px 0 15px 0; padding-bottom: 8px; border-bottom: 1px solid #333; }
+        h3 { color: #A1887F; font-size: 15px; margin: 15px 0 8px 0; }
+        p { line-height: 1.6; margin-bottom: 10px; color: #bbb; }
+        .step { background: #16213e; border-left: 4px solid #C8A951; border-radius: 8px; padding: 20px; margin: 15px 0; }
+        .step-number { background: #C8A951; color: #1a1a2e; font-weight: bold; padding: 2px 10px; border-radius: 12px; font-size: 13px; }
+        pre { background: #0f0f23; border: 1px solid #333; border-radius: 8px; padding: 15px; margin: 10px 0; overflow-x: auto; position: relative; font-size: 13px; line-height: 1.5; }
+        code { color: #7fdbca; font-family: 'Consolas', 'Courier New', monospace; }
+        .copy-btn { position: absolute; top: 8px; right: 8px; background: #C8A951; color: #1a1a2e; border: none; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold; }
+        .copy-btn:hover { background: #dbb960; }
+        .copy-btn.copied { background: #4CAF50; color: white; }
+        .warn { background: #2d1b00; border-left: 4px solid #F57C00; padding: 12px 16px; border-radius: 8px; margin: 10px 0; }
+        .warn strong { color: #F57C00; }
+        .success { background: #1b2d1b; border-left: 4px solid #4CAF50; padding: 12px 16px; border-radius: 8px; margin: 10px 0; }
+        .success strong { color: #4CAF50; }
+        .info { background: #1b1b2d; border-left: 4px solid #2196F3; padding: 12px 16px; border-radius: 8px; margin: 10px 0; }
+        .info strong { color: #2196F3; }
+        table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+        th, td { padding: 10px 14px; text-align: left; border: 1px solid #333; }
+        th { background: #795548; color: white; font-size: 13px; }
+        td { background: #16213e; font-size: 13px; }
+        td code { color: #7fdbca; }
+        .config-block { background: #0f0f23; border: 1px solid #795548; border-radius: 8px; padding: 15px; margin: 10px 0; font-family: 'Consolas', monospace; font-size: 13px; line-height: 1.6; color: #7fdbca; white-space: pre; overflow-x: auto; position: relative; }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <h1>ServYou - VPS Deployment Guide</h1>
+    <p class="subtitle">Salon &bull; Spa &bull; Clinic Booking System &mdash; Domain: servyou.argonar.co &mdash; VPS: 139.177.187.26</p>
+
+    <!-- ============================================================ -->
+    <h2>Step 1 &mdash; Namecheap DNS Setup</h2>
+    <!-- ============================================================ -->
+    <div class="step">
+        <p><span class="step-number">DNS</span> Go to <strong>Namecheap &rarr; Domain List &rarr; argonar.co &rarr; Advanced DNS</strong></p>
+        <p>Add this A record:</p>
+        <table>
+            <tr><th>Type</th><th>Host</th><th>Value</th><th>TTL</th></tr>
+            <tr><td>A Record</td><td><code>servyou</code></td><td><code>139.177.187.26</code></td><td>Automatic</td></tr>
+        </table>
+        <div class="info"><strong>Note:</strong> DNS propagation can take 5-30 minutes. You can check with: <code>ping servyou.argonar.co</code></div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>Step 2 &mdash; Apache VirtualHost</h2>
+    <!-- ============================================================ -->
+    <div class="step">
+        <p><span class="step-number">SSH</span> SSH into your VPS and create the config file:</p>
+
+        <h3>Create the config file:</h3>
+        <pre><code id="cmd1">nano /etc/apache2/sites-available/servyou.argonar.co.conf</code><button class="copy-btn" onclick="copyText('cmd1')">Copy</button></pre>
+
+        <h3>Paste this entire VirtualHost config:</h3>
+        <div class="config-block" id="vhost">&lt;VirtualHost *:80&gt;
+    ServerName servyou.argonar.co
+    DocumentRoot /var/www/ServYou/backend
+
+    &lt;Directory /var/www/ServYou/backend&gt;
+        AllowOverride All
+        Require all granted
+    &lt;/Directory&gt;
+
+    # Block .git access
+    &lt;DirectoryMatch "^/.*/\.git"&gt;
+        Require all denied
+    &lt;/DirectoryMatch&gt;
+
+    # Block guide and sensitive files
+    &lt;FilesMatch "(guide\.html|\.env|deploy\.log)$"&gt;
+        Require all denied
+    &lt;/FilesMatch&gt;
+
+    ErrorLog ${APACHE_LOG_DIR}/servyou-error.log
+    CustomLog ${APACHE_LOG_DIR}/servyou-access.log combined
+&lt;/VirtualHost&gt;</div>
+        <button class="copy-btn" onclick="copyBlock('vhost')" style="position:relative;">Copy Config</button>
+
+        <p>Save: <code>Ctrl+O</code> &rarr; <code>Enter</code> &rarr; <code>Ctrl+X</code></p>
+
+        <h3>Enable the site and reload Apache:</h3>
+        <pre><code id="cmd2">a2ensite servyou.argonar.co.conf && a2enmod rewrite && systemctl reload apache2</code><button class="copy-btn" onclick="copyText('cmd2')">Copy</button></pre>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>Step 3 &mdash; SSL with Let's Encrypt</h2>
+    <!-- ============================================================ -->
+    <div class="step">
+        <p><span class="step-number">SSL</span> Install certbot (if not already installed) and get SSL:</p>
+
+        <h3>Install certbot:</h3>
+        <pre><code id="cmd3">apt install certbot python3-certbot-apache -y</code><button class="copy-btn" onclick="copyText('cmd3')">Copy</button></pre>
+
+        <h3>Get SSL certificate:</h3>
+        <pre><code id="cmd4">certbot --apache -d servyou.argonar.co</code><button class="copy-btn" onclick="copyText('cmd4')">Copy</button></pre>
+
+        <div class="info"><strong>Note:</strong> When prompted, choose to redirect HTTP to HTTPS (option 2). Make sure DNS is already pointing before running this.</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>Step 4 &mdash; Fix Permissions for Webhook Deploy</h2>
+    <!-- ============================================================ -->
+    <div class="step">
+        <p><span class="step-number">PERMS</span> Allow Apache (www-data) to run git commands:</p>
+        <pre><code id="cmd5">chown -R www-data:www-data /var/www/ServYou/.git && git config --global --add safe.directory /var/www/ServYou</code><button class="copy-btn" onclick="copyText('cmd5')">Copy</button></pre>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>Step 5 &mdash; Set Up MySQL Database</h2>
+    <!-- ============================================================ -->
+    <div class="step">
+        <p><span class="step-number">DB</span> Import the database schema:</p>
+        <pre><code id="cmd6">mysql -u root -p < /var/www/ServYou/backend/sql/schema.sql</code><button class="copy-btn" onclick="copyText('cmd6')">Copy</button></pre>
+
+        <h3>Verify database was created:</h3>
+        <pre><code id="cmd7">mysql -u root -p -e "USE servyou_db; SHOW TABLES;"</code><button class="copy-btn" onclick="copyText('cmd7')">Copy</button></pre>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>Step 6 &mdash; Pull Latest Code</h2>
+    <!-- ============================================================ -->
+    <div class="step">
+        <p><span class="step-number">GIT</span> Pull the latest from GitHub (includes webhook-deploy.php):</p>
+        <pre><code id="cmd8">cd /var/www/ServYou && git pull origin main</code><button class="copy-btn" onclick="copyText('cmd8')">Copy</button></pre>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>Step 7 &mdash; Test Everything</h2>
+    <!-- ============================================================ -->
+    <div class="step">
+        <p><span class="step-number">TEST</span> Verify the API is working:</p>
+
+        <h3>Test API endpoint:</h3>
+        <pre><code id="cmd9">curl -s -H "Authorization: Bearer changeme-servyou-2026" https://servyou.argonar.co/api/bookings/stats</code><button class="copy-btn" onclick="copyText('cmd9')">Copy</button></pre>
+
+        <div class="success"><strong>Expected response:</strong> <code>{"success":true,"data":{"total":"0","pending":"0",...}}</code></div>
+
+        <h3>Test webhook (from your local machine):</h3>
+        <pre><code id="cmd10">curl -s https://servyou.argonar.co/webhook-deploy.php</code><button class="copy-btn" onclick="copyText('cmd10')">Copy</button></pre>
+        <div class="success"><strong>Expected:</strong> <code>Method Not Allowed</code> (405 — means it's working, only accepts POST from GitHub)</div>
+    </div>
+
+    <!-- ============================================================ -->
+    <h2>Quick Reference</h2>
+    <!-- ============================================================ -->
+    <table>
+        <tr><th>Item</th><th>Value</th></tr>
+        <tr><td>Domain</td><td><code>servyou.argonar.co</code></td></tr>
+        <tr><td>VPS IP</td><td><code>139.177.187.26</code></td></tr>
+        <tr><td>Web Root</td><td><code>/var/www/ServYou/backend</code></td></tr>
+        <tr><td>Repo Root</td><td><code>/var/www/ServYou</code></td></tr>
+        <tr><td>API Base</td><td><code>https://servyou.argonar.co/api/</code></td></tr>
+        <tr><td>Webhook URL</td><td><code>https://servyou.argonar.co/webhook-deploy.php</code></td></tr>
+        <tr><td>Webhook Secret</td><td><code>servyou-deploy-2026</code></td></tr>
+        <tr><td>API Key</td><td><code>changeme-servyou-2026</code></td></tr>
+        <tr><td>Database</td><td><code>servyou_db</code></td></tr>
+        <tr><td>Deploy Trigger</td><td>Commit with <code>[deploy]</code> in message</td></tr>
+    </table>
+
+    <div class="warn"><strong>Remember:</strong> Change the <code>WEBHOOK_SECRET</code> and <code>API_KEY</code> in production! Update them in <code>backend/webhook-deploy.php</code> and <code>backend/config/config.php</code>.</div>
+
+</div>
+
+<script>
+function copyText(id) {
+    const el = document.getElementById(id);
+    navigator.clipboard.writeText(el.textContent.trim());
+    const btn = el.parentElement.querySelector('.copy-btn');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+}
+function copyBlock(id) {
+    const el = document.getElementById(id);
+    // Convert HTML entities back to real characters for config blocks
+    const tmp = document.createElement('textarea');
+    tmp.innerHTML = el.innerHTML;
+    navigator.clipboard.writeText(tmp.value.trim());
+    const btn = el.nextElementSibling;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy Config'; btn.classList.remove('copied'); }, 2000);
+}
+</script>
+</body>
+</html>
