@@ -18,8 +18,20 @@ interface BookingDao {
     @Query("SELECT COUNT(*) FROM bookings WHERE status = :status")
     fun getCountByStatus(status: String): LiveData<Int>
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(booking: Booking): Long
+
+    @Transaction
+    suspend fun replaceAll(bookings: List<Booking>) {
+        deleteAll()
+        insertAll(bookings)
+    }
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(bookings: List<Booking>)
+
+    @Query("DELETE FROM bookings")
+    suspend fun deleteAll()
 
     @Update
     suspend fun update(booking: Booking)

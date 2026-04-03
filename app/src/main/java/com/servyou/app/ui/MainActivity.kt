@@ -3,6 +3,7 @@ package com.servyou.app.ui
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -20,11 +21,17 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setupRecyclerView()
+        setupSwipeRefresh()
         observeData()
 
         binding.fabNewBooking.setOnClickListener {
             startActivity(Intent(this, BookingFormActivity::class.java))
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.syncFromServer()
     }
 
     private fun setupRecyclerView() {
@@ -37,12 +44,23 @@ class MainActivity : AppCompatActivity() {
         binding.rvBookings.adapter = adapter
     }
 
+    private fun setupSwipeRefresh() {
+        binding.swipeRefresh.setColorSchemeResources(
+            com.servyou.app.R.color.brown_primary,
+            com.servyou.app.R.color.gold
+        )
+        binding.swipeRefresh.setOnRefreshListener {
+            viewModel.syncFromServer()
+        }
+    }
+
     private fun observeData() {
         viewModel.allBookings.observe(this) { bookings ->
             adapter.submitList(bookings)
             val hasBookings = bookings.isNotEmpty()
-            binding.rvBookings.visibility = if (hasBookings) View.VISIBLE else View.GONE
+            binding.swipeRefresh.visibility = if (hasBookings) View.VISIBLE else View.GONE
             binding.tvEmptyState.visibility = if (hasBookings) View.GONE else View.VISIBLE
+            binding.swipeRefresh.isRefreshing = false
         }
 
         viewModel.totalCount.observe(this) { count ->
@@ -55,6 +73,13 @@ class MainActivity : AppCompatActivity() {
 
         viewModel.confirmedCount.observe(this) { count ->
             binding.tvConfirmedBookings.text = count.toString()
+        }
+
+        viewModel.syncError.observe(this) { error ->
+            binding.swipeRefresh.isRefreshing = false
+            if (error != null) {
+                Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }
